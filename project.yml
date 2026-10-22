@@ -1,0 +1,77 @@
+name: ShoppingList
+options:
+  bundleIdPrefix: com.gustavomartins
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CODE_SIGN_STYLE: Automatic
+    # Set to your Personal Team ID (Xcode → Settings → Accounts) to run on a phone.
+    DEVELOPMENT_TEAM: ""
+
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.0.0"
+
+targets:
+  ShoppingList:
+    type: application
+    platform: iOS
+    sources:
+      - ShoppingList
+    dependencies:
+      - package: Supabase
+        product: Supabase
+    info:
+      path: ShoppingList/Info.plist
+      properties:
+        CFBundleDisplayName: Shopping List
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        SupabaseURL: $(SUPABASE_URL)
+        SupabaseKey: $(SUPABASE_KEY)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gustavomartins.shoppinglist
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  ShoppingListTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ShoppingListTests
+    dependencies:
+      - target: ShoppingList
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gustavomartins.shoppinglist.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  ShoppingList:
+    build:
+      targets:
+        ShoppingList: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ShoppingListTests
