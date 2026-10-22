@@ -41,6 +41,7 @@ export class SyncEngine {
   private retry?: ReturnType<typeof setTimeout>
   private retryAttempt = 0
   private channels = new Map<string, RealtimeChannel>()
+  private subscriptions: Promise<void> = Promise.resolve()
   private isShutDown = false
 
   constructor(
@@ -183,8 +184,13 @@ export class SyncEngine {
   private async pushLists(batch: OutboxEntry[]): Promise<void> {
     if (!batch.length) return
     try {
+      const wasCreated = (await this.db.lists.bulkGet(batch.map((e) => e.row_id))).some((l) => l?.serverUs === 0)
       const saved = await this.remote.upsertLists(batch.map((e) => e.payload as ListDTO))
       await this.complete(batch, saved, 'list')
+      // A list created on this device exists on the server only now. Listen to it right away instead
+      // of at the next pull — on a first launch that's the next foreground, and the partner's
+      // changes wouldn't show up live until then. Not awaited: item pushes shouldn't wait for it.
+      if (wasCreated) void this.subscribeTo(await this.syncedListIds())
     } catch (error) {
       if (!(error instanceof RemoteError) || error.kind !== 'rejected') throw error
       console.error('List write rejected:', error)
@@ -267,7 +273,21 @@ export class SyncEngine {
 
   // Realtime
 
-  private async subscribeTo(listIds: string[]): Promise<void> {
+  /** Serialized, so a push and a pull subscribing at the same time can't open duplicate channels. */
+  private subscribeTo(listIds: string[]): Promise<void> {
+    this.subscriptions = this.subscriptions.then(() => this.updateChannels(listIds)).catch((error) => {
+      console.error('Realtime subscribe failed:', error)
+    })
+    return this.subscriptions
+  }
+
+  /** Active lists the server already has (the ones a pull would subscribe to). */
+  private async syncedListIds(): Promise<string[]> {
+    return (await this.db.lists.toArray()).filter((l) => !l.deleted_at && l.serverUs > 0).map((l) => l.id)
+  }
+
+  private async updateChannels(listIds: string[]): Promise<void> {
+    if (this.isShutDown) return
     const wanted = new Set(listIds)
     for (const [listId, channel] of this.channels) {
       // Drop channels for lists we left, and dead sockets (e.g. a PWA resumed from the background).

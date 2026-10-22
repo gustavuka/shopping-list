@@ -53,7 +53,9 @@ class FakeRemote {
   async fetchProfiles() {
     return [{ id: partner, display_name: 'Ana' }]
   }
-  async subscribe(_listId: string, onChange: (c: RemoteChange) => void) {
+  subscribed = new Set<string>()
+  async subscribe(listId: string, onChange: (c: RemoteChange) => void) {
+    this.subscribed.add(listId)
     this.live = onChange
     return { state: 'joined' } as never
   }
@@ -62,7 +64,7 @@ class FakeRemote {
   partnerEdit(id: string, patch: Partial<ItemDTO>) {
     const row = { ...this.items.get(id)!, ...patch, updated_by: partner, updated_at: this.stamp() }
     this.items.set(id, row)
-    this.live?.({ kind: 'item', row })
+    if (this.subscribed.has(row.list_id)) this.live?.({ kind: 'item', row })
   }
 }
 
@@ -115,6 +117,18 @@ describe('SyncEngine', () => {
     expect((await db.items.get(item.id))?.is_checked).toBe(true)
     expect(sync.getState().latestActivity).toMatchObject({ actorName: 'Ana', verb: 'checked', itemNames: ['Bread'] })
     expect(sync.getState().recentlyChanged.has(item.id)).toBe(true)
+  })
+
+  it('listens live to a list created after the first pull (first launch on a new device)', async () => {
+    await sync.start() // nothing on the server yet: no channels
+    const list = await store.ensureDefaultList()
+    const item = (await store.addItem('Coffee', list.id))!
+    await sync.push()
+    await new Promise((r) => setTimeout(r, 20))
+    expect(remote.subscribed.has(list.id)).toBe(true)
+    remote.partnerEdit(item.id, { is_checked: true, checked_by: partner })
+    await new Promise((r) => setTimeout(r, 20))
+    expect((await db.items.get(item.id))?.is_checked).toBe(true)
   })
 
   it('does not let a remote change overwrite a pending local edit', async () => {
