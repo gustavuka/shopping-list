@@ -85,15 +85,25 @@ Always write `(select auth.uid())` rather than `auth.uid()` in policies so Postg
 | column | type | notes |
 |---|---|---|
 | `list_id` | `uuid` PK → `lists.id` | |
-| `password_hash` | `text` | bcrypt (`extensions.crypt` + `gen_salt('bf')`) |
+| `password_hash` | `text` | bcrypt (`extensions.crypt` + `gen_salt('bf', 10)`) |
 | `updated_at` | `timestamptz` | |
 
 RLS enabled with **no policies** and all privileges revoked: clients can never read it. `lists.has_password` (server-maintained) tells members whether the room can be joined yet.
 
+### `join_attempts`
+Failed `join_list` calls (`user_id`, `list_id` when the code matched a room, `attempted_at`). Same lockdown as `list_secrets`; only `join_list` touches it. Purged after a day.
+
+## Limits ([ADR 0010](decisions/0010-public-web-hardening.md))
+
+- Text: `items.name` 1–100, `quantity` ≤ 40, `note` ≤ 500, `category` ≤ 32; `lists.name` 1–60, `emoji` ≤ 16; `profiles.display_name` ≤ 50 (truncated at sign-up).
+- Rows: 2000 items per list and 50 lists per creator, tombstones included (`enforce_row_caps` trigger, `P0001`). Upserts of existing rows always pass.
+- Server-owned: `updated_at`, `updated_by`, `created_by`, `checked_by` (whoever checked it), and on `lists` `invite_code` + `has_password` (only the RPCs change them).
+
 ## RPCs
 
-- `set_list_password(p_list_id uuid, p_password text)` — member only; ≥ 4 characters; stores the hash and sets `lists.has_password`.
-- `join_list(p_invite_code text, p_password text) returns lists` — `security definer`; requires a matching code **and** password (same `P0002` error for either mismatch), inserts the caller into `list_members` (idempotent), returns the list.
+- `set_list_password(p_list_id uuid, p_password text)` — member only; ≥ 6 characters; stores the hash and sets `lists.has_password`.
+- `join_list(p_invite_code text, p_password text) returns jsonb` — `security definer`; requires a matching code **and** password, inserts the caller into `list_members` (idempotent). Returns `{"list": <row>}`, or `{"error": "invalid"}` for a wrong code *or* password (indistinguishable), or `{"error": "throttled"}` after 5 failures by this user in 15 min or 20 against this room in an hour. It returns instead of raising so the failed attempt is kept.
+- `purge_tombstones()` — not callable by clients; run daily at 04:17 UTC by `pg_cron`. Deletes tombstones older than 30 days, join attempts older than a day, and guests older than a week with no room and no authored rows.
 - `regenerate_invite_code(p_list_id uuid) returns text` — member only.
 
 ## Realtime

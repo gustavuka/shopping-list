@@ -16,6 +16,7 @@ struct SettingsView: View {
             Form {
                 Section {
                     TextField("Your name", text: $displayName)
+                        .characterLimit(TextLimit.displayName, text: $displayName)
                         .textContentType(.givenName)
                         .submitLabel(.done)
                         .onSubmit(saveName)

@@ -61,7 +61,7 @@ struct ShareRoomSheet: View {
                     .foregroundStyle(.secondary)
             }
 
-            TextField("At least 4 characters", text: $password)
+            TextField("At least 6 characters", text: $password)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.done)
@@ -131,7 +131,7 @@ struct ShareRoomSheet: View {
     // MARK: Actions
 
     private func savePassword() {
-        guard password.count >= 4, !isSaving else { return }
+        guard password.count >= 6, !isSaving else { return }
         isSaving = true
         errorMessage = nil
         let chosen = password

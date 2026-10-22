@@ -4,6 +4,8 @@ A native iOS app for a couple to share one live shopping list. Both partners add
 
 **Stack:** Swift 6 · SwiftUI · iOS 26+ (Liquid Glass) · SwiftData (local cache) · Supabase (Postgres + RLS + Realtime + guest / email-password auth) via `supabase-swift` · XcodeGen
 
+**Web app:** `web/` is a PWA client of the same backend (Vite · React · TypeScript · Dexie/IndexedDB · supabase-js), a port of the iOS sync design with the same names ([ADR 0009](docs/decisions/0009-web-pwa-client.md)). Sync, schema, or `Domain/` changes go into both clients.
+
 **Identity & sharing:** each phone is a guest (just a name) or an email + password account; guests can upgrade in place. A list is a *room* joined with its code + password, whoever you are ([ADR 0007](docs/decisions/0007-guest-users-and-room-passwords.md), [0008](docs/decisions/0008-optional-email-accounts.md)). Never add a flow that needs email delivery — the free plan can't send it.
 
 **Status:** see the milestones in [docs/product.md](docs/product.md#milestones). Feature-complete for v1; next is shipping to both phones (M6).
@@ -18,6 +20,9 @@ TEST_RUNNER_RUN_PERF=1 xcodebuild … test            # also run the (slow) laun
 TEST_RUNNER_RUN_INTEGRATION=1 xcodebuild … test     # also run tests against local Supabase (needs `supabase start`)
 xcrun simctl launch booted com.gustavomartins.shoppinglist -uiTesting -seeded   # signed-in demo, no backend
 swift scripts/make-app-icon.swift ShoppingList/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+cd web && npm run dev                               # web app (PWA); needs web/.env.local, see docs/setup.md
+cd web && npm test                                  # web unit tests (Vitest)
+cd web && npm run build                             # typecheck + static build in web/dist
 supabase start                                      # local Supabase (needs Docker)
 supabase db reset                                   # re-apply all migrations + seed locally
 supabase migration new <name>                       # new SQL migration in supabase/migrations
@@ -51,5 +56,5 @@ The `.xcodeproj` is generated — never edit it by hand; change `project.yml` an
 | Launch time, scrolling, profiling | [docs/performance.md](docs/performance.md) |
 | Swift conventions | [docs/swift-style.md](docs/swift-style.md) |
 | Tests | [docs/testing.md](docs/testing.md) |
-| Dev environment, Supabase, installing on phones | [docs/setup.md](docs/setup.md) |
+| Dev environment, Supabase, installing on phones, web app | [docs/setup.md](docs/setup.md) |
 | Why things are the way they are | [docs/decisions/](docs/decisions/) |

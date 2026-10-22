@@ -89,13 +89,13 @@ actor FakeRemote: RemoteSyncing {
     func joinList(inviteCode: String, password: String) async throws -> ListDTO {
         guard let list = lists.values.first(where: { $0.inviteCode == inviteCode }),
               passwords[list.id] == password else {
-            throw FakeRejection()
+            throw JoinError.invalidCodeOrPassword
         }
         return list
     }
 
     func setListPassword(listID: UUID, password: String) async throws {
-        guard password.count >= 4 else { throw FakeRejection() }
+        guard password.count >= 6 else { throw FakeRejection() }
         passwords[listID] = password
         lists[listID]?.hasPassword = true
         lists[listID]?.updatedAt = tick()

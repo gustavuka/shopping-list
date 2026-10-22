@@ -47,9 +47,11 @@ struct SessionRootView: View {
                     .background(Color(.systemGroupedBackground))
             }
         }
-        .task {
-            await sync.start().value
-            store.ensureDefaultList()
+        .task { sync.start() }
+        // First launch on this device: create "Groceries" only once a pull has succeeded, so a flaky
+        // network can't hide the account's existing lists and leave a duplicate behind.
+        .onChange(of: sync.status.lastSyncedAt != nil, initial: true) { _, hasPulled in
+            if hasPulled { store.ensureDefaultList() }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {

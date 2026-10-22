@@ -50,6 +50,22 @@ Config/
 project.yml
 ```
 
+## Web client (`web/`)
+
+A PWA with the same layers and names ([ADR 0009](decisions/0009-web-pwa-client.md)):
+
+```
+web/src/
+  App.tsx            auth gate, per-user session (ListStore + SyncEngine), ?join= links
+  features/          SessionRoot, ListView, ItemRow, ItemEditor, Share/Join/Settings sheets, Welcome
+  domain/            category, categoryGuesser, ordering, activity — ports of Domain/
+  data/              db.ts (Dexie/IndexedDB ≈ SwiftData), store.ts (ListStore), sync.ts (SyncEngine),
+                     conflict.ts, remote.ts (SupabaseRemote), auth.ts (AuthService), rows.ts (DTOs)
+  ui/                Sheet, motion (FLIP), haptics
+```
+
+Views read with `useLiveQuery` (≈ `@Query`) and observe `SyncEngine` / `AuthService` with `useSyncExternalStore`. When changing sync, the schema, or `Domain/`, change both clients.
+
 ## Data flow
 
 ```

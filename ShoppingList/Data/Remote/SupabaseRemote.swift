@@ -35,8 +35,19 @@ final class SupabaseRemote: RemoteSyncing {
             .execute()
     }
 
+    /// The RPC returns failures instead of raising them, so the server can record the attempt.
     func joinList(inviteCode: String, password: String) async throws -> ListDTO {
-        try await client.rpc("join_list", params: ["p_invite_code": inviteCode, "p_password": password]).execute().value
+        struct Result: Decodable {
+            var list: ListDTO?
+            var error: String?
+        }
+        let result: Result = try await client.rpc(
+            "join_list", params: ["p_invite_code": inviteCode, "p_password": password]
+        ).execute().value
+        guard let list = result.list else {
+            throw result.error == "throttled" ? JoinError.tooManyAttempts : JoinError.invalidCodeOrPassword
+        }
+        return list
     }
 
     func setListPassword(listID: UUID, password: String) async throws {

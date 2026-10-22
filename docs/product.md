@@ -31,7 +31,7 @@ Two people (a couple) sharing one household. Both are equal editors — there is
 
 - Prices, budgets, receipts.
 - Recipes / meal planning.
-- Android or web clients (Supabase keeps the door open — see [ADR 0002](decisions/0002-supabase-backend.md)).
+- A native Android app (the web app covers Android — [ADR 0009](decisions/0009-web-pwa-client.md)).
 - More than one household / complex permission roles.
 - Push notifications (needs a paid Apple Developer account).
 
@@ -45,6 +45,7 @@ Two people (a couple) sharing one household. Both are equal editors — there is
 - [x] **M5 — Polish:** unsynced-row marker, background flush of the outbox, app icon, celebration on last item, drag to reorder, UI smoke test, launch timer.
 - [ ] **M6 — Ship to both phones:** ~~Supabase cloud project~~ (done: `shopping-list`, São Paulo), install on both iPhones, Instruments pass on device, two-device checklist ([testing.md](testing.md)).
 - [x] **M6.5 — Accounts:** optional email + password accounts, guest → account upgrade keeping the same user.
+- [ ] **M6.6 — Web app (PWA):** use it from a link, no install ([ADR 0009](decisions/0009-web-pwa-client.md)). *Started:* `web/` with guest/account sign-in, rooms (share, join, `?join=` links), add / check / edit / swipe-delete / clear cart, category grouping, offline outbox, delta fetch, Realtime, partner activity. *Hardened* for a public URL ([ADR 0010](decisions/0010-public-web-hardening.md)). *Next:* host it (static), try it on both phones, drag to reorder, captcha (web ready; needs iOS support) before sharing the link widely.
 - [ ] **M7 — App Store (later):** paid Apple Developer account, captcha on sign-up, leave room / delete my account & data, Sign in with Apple, password reset (SMTP), privacy policy, paid Supabase plan.
 
 ## Future ideas

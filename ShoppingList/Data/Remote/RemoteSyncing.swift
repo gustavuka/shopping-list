@@ -12,7 +12,7 @@ protocol RemoteSyncing: Sendable {
     /// Own profile plus everyone sharing a list with the user.
     func fetchProfiles() async throws -> [ProfileDTO]
     func updateDisplayName(_ name: String, userID: UUID) async throws
-    /// Joins a room. Wrong code and wrong password fail the same way (see `RemoteFailure`).
+    /// Joins a room. Throws `JoinError` when refused; wrong code and wrong password fail the same way.
     func joinList(inviteCode: String, password: String) async throws -> ListDTO
     func setListPassword(listID: UUID, password: String) async throws
     /// Live changes for the given lists. Returns once subscribed, so a fetch issued afterwards
@@ -35,6 +35,14 @@ struct ProfileDTO: Codable, Sendable, Equatable, Identifiable {
         case id
         case displayName = "display_name"
     }
+}
+
+/// `join_list` refused the join.
+enum JoinError: Error, Equatable {
+    /// No room with this code and password (indistinguishable on purpose).
+    case invalidCodeOrPassword
+    /// Too many failed tries from this user or against this room; wait and retry.
+    case tooManyAttempts
 }
 
 enum RemoteFailure {

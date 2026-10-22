@@ -20,7 +20,7 @@ final class WelcomeFlowTests: XCTestCase {
 
         app.buttons["People"].tap()
         app.buttons["Share room"].tap()
-        let password = app.textFields["At least 4 characters"]
+        let password = app.textFields["At least 6 characters"]
         XCTAssertTrue(password.waitForExistence(timeout: 5))
         password.tap()
         password.typeText("pao-de-queijo")

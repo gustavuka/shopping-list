@@ -15,11 +15,16 @@ Must-have suites:
 
 SwiftData tests use an in-memory `ModelContainer` (`ModelConfiguration(isStoredInMemoryOnly: true)`), fresh per test.
 
+## Web unit tests (Vitest)
+
+`cd web && npm test`. Same must-haves as above, against the TypeScript ports: `src/test/domain.test.ts` (category guesser, conflict resolver, microsecond timestamps), `store.test.ts` (outbox coalescing, soft deletes), and `sync.test.ts` (`SyncEngine` against an in-memory `FakeRemote`: push, mid-flight edits, live partner changes, echoes, rejections). IndexedDB comes from `fake-indexeddb`, a fresh database per test.
+
 ## Database tests (pgTAP)
 
 In `supabase/tests/`, run with `supabase test db` against the local stack:
 - RLS: a non-member cannot select/insert/update items or lists of another household.
-- Rooms: no join before a password is set; only members set it (≥ 4 chars); hashes unreadable; wrong code/password give the same error; join is case-insensitive on the code and idempotent.
+- Rooms: no join before a password is set; only members set it (≥ 6 chars); hashes and join attempts unreadable; wrong code/password give the same result; join is case-insensitive on the code and idempotent; 5 failures per user or 20 per room throttle joins.
+- Limits: text lengths, 2000 items per list, 50 lists per creator; upserts of existing rows still pass at the cap. `invite_code`, `has_password` and `checked_by` can't be set by clients.
 - `updated_at` trigger always sets server time, ignoring client-sent values.
 - Profile is auto-created on sign-up; creator is auto-added as list member.
 

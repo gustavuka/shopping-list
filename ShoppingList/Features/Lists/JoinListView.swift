@@ -1,4 +1,3 @@
-import Supabase
 import SwiftUI
 
 /// Join a room with its 6-character code and the password the partner chose.
@@ -95,6 +94,7 @@ struct JoinListView: View {
     }
 
     private func join() {
+        // 4, not 6: rooms created before the 6-character minimum keep their passwords.
         guard normalizedCode.count == 6, password.count >= 4, !isJoining else { return }
         isJoining = true
         Task {
@@ -103,8 +103,11 @@ struct JoinListView: View {
                 let listID = try await sync.join(inviteCode: normalizedCode, password: password)
                 onJoined(listID)
                 dismiss()
-            } catch let error as PostgrestError where error.code == "P0002" {
+            } catch JoinError.invalidCodeOrPassword {
                 errorMessage = String(localized: "That code and password don't match a room. Check both and try again.")
+                failures += 1
+            } catch JoinError.tooManyAttempts {
+                errorMessage = String(localized: "Too many tries. Wait a few minutes and try again.")
                 failures += 1
             } catch {
                 errorMessage = String(localized: "Couldn't join right now. Check your connection and try again.")

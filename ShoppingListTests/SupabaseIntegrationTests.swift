@@ -46,11 +46,8 @@ struct SupabaseIntegrationTests {
 
         try await gus.remote.setListPassword(listID: room.id, password: "pao-de-queijo")
 
-        do {
+        await #expect(throws: JoinError.invalidCodeOrPassword, "a wrong password is refused like a wrong code") {
             _ = try await ana.remote.joinList(inviteCode: code, password: "wrong-one")
-            Issue.record("joined with a wrong password")
-        } catch {
-            #expect(ana.remote.classify(error) == .rejected)
         }
         #expect(try await ana.remote.fetchLists().isEmpty, "not a member yet")
 

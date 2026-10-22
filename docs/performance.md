@@ -13,6 +13,18 @@
 | Local change visible on partner's phone (both online) | < 1 s |
 | Main-thread hang | never > 100 ms |
 
+### Web app
+
+Measured on an iPhone in Safari, production build (`npm run build`), installed to the Home Screen.
+
+| Metric | Budget |
+|---|---|
+| Initial JS (gzip) | < 200 kB (about 170 kB now, mostly supabase-js) |
+| Launch → list visible with cached data | < 600 ms, no network wait (session and list come from storage) |
+| Tap → visual response | same frame |
+
+Vite warns above 650 kB of minified JS per chunk (`build.chunkSizeWarningLimit`). Treat that warning as a budget failure, not noise.
+
 ## Rules
 
 **Launch**

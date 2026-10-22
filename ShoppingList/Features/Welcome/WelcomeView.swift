@@ -40,6 +40,7 @@ struct WelcomeView: View {
 
             VStack(spacing: 12) {
                 TextField("Your name", text: $name)
+                    .characterLimit(TextLimit.displayName, text: $name)
                     .textContentType(.givenName)
                     .submitLabel(.go)
                     .focused($isNameFocused)

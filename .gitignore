@@ -22,3 +22,6 @@ supabase/.temp/
 supabase/.branches/
 .env
 .env.*
+
+# Web app
+!web/.env.example

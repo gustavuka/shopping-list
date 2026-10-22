@@ -42,6 +42,7 @@ struct AccountSheet: View {
                 Section {
                     if asksForName {
                         TextField("Your name", text: $name)
+                            .characterLimit(TextLimit.displayName, text: $name)
                             .textContentType(.givenName)
                             .focused($focused, equals: .name)
                             .accessibilityIdentifier("account.name")

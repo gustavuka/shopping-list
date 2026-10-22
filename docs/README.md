@@ -10,7 +10,7 @@
 | [performance.md](performance.md) | Budgets and rules that keep the app snappy |
 | [swift-style.md](swift-style.md) | Swift / SwiftUI conventions |
 | [testing.md](testing.md) | What to test and how |
-| [setup.md](setup.md) | Dev environment, Supabase project, installing on devices |
+| [setup.md](setup.md) | Dev environment, Supabase project, installing on devices, web app |
 | [decisions/](decisions/) | Architecture Decision Records (ADRs) |
 
 ## Adding an ADR
@@ -45,3 +45,5 @@ What gets easier, what gets harder, what we must now do.
 - [0006 — SyncEngine on the main actor / main context](decisions/0006-sync-on-main-context.md)
 - [0007 — Guest users and password-protected rooms](decisions/0007-guest-users-and-room-passwords.md)
 - [0008 — Optional email + password accounts](decisions/0008-optional-email-accounts.md)
+- [0009 — A web (PWA) client next to the iOS app](decisions/0009-web-pwa-client.md)
+- [0010 — Hardening the backend for a public web URL](decisions/0010-public-web-hardening.md)

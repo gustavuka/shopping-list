@@ -139,7 +139,7 @@ extension SyncEngineTests {
         #expect(list.hasPassword)
         #expect(list.inviteCode == "ABC234", "setting a password pushes the list first")
 
-        await #expect(throws: FakeRejection.self) {
+        await #expect(throws: JoinError.invalidCodeOrPassword) {
             _ = try await sync.join(inviteCode: "abc234", password: "wrong")
         }
         let joinedID = try await sync.join(inviteCode: "abc234", password: "pao-de-queijo")
