@@ -39,6 +39,9 @@ What gets easier, what gets harder, what we must now do.
 
 - [0001 — Native SwiftUI, iOS 26 minimum](decisions/0001-swiftui-ios26.md)
 - [0002 — Supabase as backend](decisions/0002-supabase-backend.md)
-- [0003 — Email OTP authentication](decisions/0003-email-otp-auth.md)
+- [0003 — Email OTP authentication](decisions/0003-email-otp-auth.md) *(superseded by 0007)*
 - [0004 — Offline-first with a local SwiftData cache](decisions/0004-offline-first-local-cache.md)
 - [0005 — XcodeGen for project generation](decisions/0005-xcodegen.md)
+- [0006 — SyncEngine on the main actor / main context](decisions/0006-sync-on-main-context.md)
+- [0007 — Guest users and password-protected rooms](decisions/0007-guest-users-and-room-passwords.md)
+- [0008 — Optional email + password accounts](decisions/0008-optional-email-accounts.md)

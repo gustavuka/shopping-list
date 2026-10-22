@@ -18,6 +18,9 @@ final class OutboxEntry {
     var payload: Data
     var enqueuedAt: Date
     var attempts: Int
+    /// Bumped whenever `payload` is replaced. A push only retires the entry if the revision it sent
+    /// is still current — otherwise a newer local edit arrived mid-flight and must be pushed too.
+    var revision: Int = 0
 
     var entity: OutboxEntity {
         OutboxEntity(rawValue: entityRaw) ?? .item
@@ -29,5 +32,6 @@ final class OutboxEntry {
         self.payload = payload
         self.enqueuedAt = now
         self.attempts = 0
+        self.revision = 0
     }
 }

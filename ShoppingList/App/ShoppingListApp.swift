@@ -3,59 +3,61 @@ import SwiftUI
 
 @main
 struct ShoppingListApp: App {
-    // Keep init cheap: open the store, build services. Nothing touches the network here
+    // Keep init cheap: open the store, build services. Nothing waits on the network here
     // (docs/performance.md#launch).
-    private let container: ModelContainer
-    private let store: ListStore
+    @State private var model: AppModel
 
     init() {
+        LaunchTimer.appDidStart()
+        let arguments = ProcessInfo.processInfo.arguments
+        let isDemo = arguments.contains("-uiTesting")
+        let container: ModelContainer
         do {
-            container = try .app()
+            container = try .app(inMemory: isDemo)
         } catch {
             fatalError("Could not open the local database: \(error)")
         }
-        store = ListStore(context: container.mainContext, currentUserID: LocalIdentity.userID)
+        let model = isDemo
+            ? AppModel(demoContainer: container, seeded: arguments.contains("-seeded"))
+            : AppModel(container: container, config: .current)
+        _model = State(initialValue: model)
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .fontDesign(.rounded)
-                .environment(store)
+                .environment(model)
+                .environment(model.network)
         }
-        .modelContainer(container)
+        .modelContainer(model.container)
     }
 }
 
-/// Opens straight into the main list. Rendered from the local store on the first frame.
+/// Picks the welcome screen or the signed-in experience. A returning user goes straight to their list.
 struct RootView: View {
-    @Environment(ListStore.self) private var store
-    @Query(filter: #Predicate<ListRecord> { $0.deletedAt == nil }, sort: \ListRecord.createdAt)
-    private var lists: [ListRecord]
+    @Environment(AppModel.self) private var model
 
     var body: some View {
-        NavigationStack {
-            if let list = lists.first {
-                ShoppingListView(list: list)
+        Group {
+            if let session = model.session {
+                SessionRootView()
+                    .environment(session.store)
+                    .environment(session.sync)
+                    .id(session.userID)
+                    .transition(.opacity)
+            } else if let auth = model.auth {
+                WelcomeView(auth: auth)
+                    .transition(.opacity)
             } else {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
-                    .onAppear { store.ensureDefaultList() }
+                ContentUnavailableView(
+                    "Supabase isn't configured",
+                    systemImage: "wrench.and.screwdriver",
+                    description: Text("Add SUPABASE_URL and SUPABASE_KEY to Config/Secrets.xcconfig. See docs/setup.md.")
+                )
             }
         }
+        .animation(.smooth, value: model.session?.userID)
+        .onOpenURL { model.handle($0) }
     }
-}
-
-#Preview("List") {
-    PreviewSupport.root(seeded: true)
-}
-
-#Preview("Empty") {
-    PreviewSupport.root(seeded: false)
-}
-
-#Preview("Large type, dark") {
-    PreviewSupport.root(seeded: true)
-        .dynamicTypeSize(.accessibility2)
-        .preferredColorScheme(.dark)
 }

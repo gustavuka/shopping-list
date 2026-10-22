@@ -2,7 +2,7 @@ import Foundation
 
 /// Wire format for `public.items`. Optionals encode as explicit `null` so clearing a field
 /// (e.g. removing a quantity) actually clears it on the server during an upsert.
-struct ItemDTO: Codable, Sendable, Equatable {
+struct ItemDTO: Codable, Sendable, Equatable, Identifiable {
     var id: UUID
     var listID: UUID
     var name: String
@@ -54,7 +54,7 @@ struct ItemDTO: Codable, Sendable, Equatable {
 }
 
 /// Wire format for `public.lists`. `invite_code` is omitted when unknown so the server generates one.
-struct ListDTO: Codable, Sendable, Equatable {
+struct ListDTO: Codable, Sendable, Equatable, Identifiable {
     var id: UUID
     var name: String
     var emoji: String?
@@ -63,9 +63,12 @@ struct ListDTO: Codable, Sendable, Equatable {
     var createdAt: Date
     var updatedAt: Date
     var deletedAt: Date?
+    /// Maintained by the server (`set_list_password`); never sent by the client.
+    var hasPassword = false
 
     enum CodingKeys: String, CodingKey {
         case id, name, emoji
+        case hasPassword = "has_password"
         case inviteCode = "invite_code"
         case createdBy = "created_by"
         case createdAt = "created_at"
@@ -86,6 +89,22 @@ struct ListDTO: Codable, Sendable, Equatable {
     }
 }
 
+// In an extension so ListDTO keeps its memberwise initializer.
+extension ListDTO {
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        emoji = try c.decodeIfPresent(String.self, forKey: .emoji)
+        inviteCode = try c.decodeIfPresent(String.self, forKey: .inviteCode)
+        createdBy = try c.decode(UUID.self, forKey: .createdBy)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+        deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
+        hasPassword = try c.decodeIfPresent(Bool.self, forKey: .hasPassword) ?? false
+    }
+}
+
 extension ItemDTO {
     init(_ record: ItemRecord) {
         self.init(
@@ -103,8 +122,55 @@ extension ListDTO {
         self.init(
             id: record.id, name: record.name, emoji: record.emoji, inviteCode: record.inviteCode,
             createdBy: record.createdBy, createdAt: record.createdAt, updatedAt: record.updatedAt,
-            deletedAt: record.deletedAt
+            deletedAt: record.deletedAt, hasPassword: record.hasPassword
         )
+    }
+}
+
+extension ItemRecord {
+    convenience init(_ dto: ItemDTO) {
+        self.init(
+            id: dto.id, listID: dto.listID, name: dto.name, category: Category(storedValue: dto.category),
+            position: dto.position, createdBy: dto.createdBy, now: dto.createdAt
+        )
+        apply(dto)
+    }
+
+    /// Overwrites every field with the server's version and marks the row as synced.
+    func apply(_ dto: ItemDTO) {
+        name = dto.name
+        quantity = dto.quantity
+        note = dto.note
+        categoryRaw = dto.category
+        position = dto.position
+        isChecked = dto.isChecked
+        checkedBy = dto.checkedBy
+        checkedAt = dto.checkedAt
+        createdBy = dto.createdBy
+        updatedBy = dto.updatedBy
+        createdAt = dto.createdAt
+        updatedAt = dto.updatedAt
+        deletedAt = dto.deletedAt
+        hasPendingChanges = false
+    }
+}
+
+extension ListRecord {
+    convenience init(_ dto: ListDTO) {
+        self.init(id: dto.id, name: dto.name, createdBy: dto.createdBy, now: dto.createdAt)
+        apply(dto)
+    }
+
+    func apply(_ dto: ListDTO) {
+        name = dto.name
+        emoji = dto.emoji
+        inviteCode = dto.inviteCode
+        hasPassword = dto.hasPassword
+        createdBy = dto.createdBy
+        createdAt = dto.createdAt
+        updatedAt = dto.updatedAt
+        deletedAt = dto.deletedAt
+        hasPendingChanges = false
     }
 }
 
@@ -117,5 +183,17 @@ extension JSONEncoder {
             try container.encode(date.formatted(Date.ISO8601FormatStyle(includingFractionalSeconds: true)))
         }
         return encoder
+    }()
+}
+
+extension JSONDecoder {
+    /// Decoder for outbox payloads written with `JSONEncoder.outbox`.
+    static let outbox: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let string = try decoder.singleValueContainer().decode(String.self)
+            return try Date(string, strategy: Date.ISO8601FormatStyle(includingFractionalSeconds: true))
+        }
+        return decoder
     }()
 }

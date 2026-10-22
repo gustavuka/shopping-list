@@ -16,8 +16,8 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CODE_SIGN_STYLE: Automatic
-    # Set to your Personal Team ID (Xcode → Settings → Accounts) to run on a phone.
-    DEVELOPMENT_TEAM: ""
+    # Personal Team (free): installs on a phone expire after 7 days. See docs/setup.md.
+    DEVELOPMENT_TEAM: T9QUJ8KK3S
 
 packages:
   Supabase:
@@ -41,6 +41,9 @@ targets:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.gustavomartins.shoppinglist
+            CFBundleURLSchemes: [shoppinglist]
         SupabaseURL: $(SUPABASE_URL)
         SupabaseKey: $(SUPABASE_KEY)
     settings:
@@ -64,6 +67,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.gustavomartins.shoppinglist.tests
         GENERATE_INFOPLIST_FILE: YES
 
+  ShoppingListUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ShoppingListUITests
+    dependencies:
+      - target: ShoppingList
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gustavomartins.shoppinglist.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ShoppingList
+
 schemes:
   ShoppingList:
     build:
@@ -75,3 +91,4 @@ schemes:
       config: Debug
       targets:
         - ShoppingListTests
+        - ShoppingListUITests

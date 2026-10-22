@@ -16,8 +16,8 @@ Two people (a couple) sharing one household. Both are equal editors — there is
 
 ## MVP scope (v1)
 
-- Sign in with email + 6-digit code.
-- Create a list; invite the partner with a short invite code (shareable via the share sheet as a deep link).
+- Start as a guest (just a name — [ADR 0007](decisions/0007-guest-users-and-room-passwords.md)) or with an email + password account; guests can save themselves as an account later, keeping everything ([ADR 0008](decisions/0008-optional-email-accounts.md)).
+- Every list is a room: share its code + a password you choose; the partner taps **Join a room** and enters both. A `shoppinglist://join/CODE` link pre-fills the code.
 - Multiple lists supported in the model, but the UX is optimized for one main list (opens straight into it).
 - Items: name, optional quantity, optional note, category (auto-guessed from name, editable).
 - Add, edit, delete (swipe), reorder within the list.
@@ -39,14 +39,18 @@ Two people (a couple) sharing one household. Both are equal editors — there is
 
 - [x] **M0 — Foundations:** docs, Supabase schema + RLS + pgTAP tests, XcodeGen project.
 - [x] **M1 — Local list:** add / check / edit / delete / clear cart, category grouping, motion + haptics. Works fully offline; changes are queued in the outbox.
-- [ ] **M2 — Auth:** email OTP sign-in screens, session restore, replace `LocalIdentity` with the real user id.
-- [ ] **M3 — Sync:** `SyncEngine` drains the outbox, delta fetch, Realtime, conflict resolution, offline indicator.
-- [ ] **M4 — Sharing:** invite code / share link, join flow, partner-activity hint.
-- [ ] **M5 — Polish:** app icon, celebration on last item, reorder, Instruments pass, two-device checklist.
+- [x] **M2 — Auth:** guest users (originally email OTP; replaced by ADR 0007), session restore from Keychain, per-user session, reset wipes local data.
+- [x] **M3 — Sync:** outbox push (with mid-flight revisions), delta fetch, Realtime, conflict resolution, offline pill, rejection handling.
+- [x] **M4 — Sharing:** rooms with code + password, share sheet + `shoppinglist://join/CODE` deep link, join flow, list switcher, partner-activity pill + row highlight, display names.
+- [x] **M5 — Polish:** unsynced-row marker, background flush of the outbox, app icon, celebration on last item, drag to reorder, UI smoke test, launch timer.
+- [ ] **M6 — Ship to both phones:** ~~Supabase cloud project~~ (done: `shopping-list`, São Paulo), install on both iPhones, Instruments pass on device, two-device checklist ([testing.md](testing.md)).
+- [x] **M6.5 — Accounts:** optional email + password accounts, guest → account upgrade keeping the same user.
+- [ ] **M7 — App Store (later):** paid Apple Developer account, captcha on sign-up, leave room / delete my account & data, Sign in with Apple, password reset (SMTP), privacy policy, paid Supabase plan.
 
 ## Future ideas
 
-- Sign in with Apple (once a paid developer account exists).
+- Sign in with Apple as another way to sign in (needs the paid developer account).
+- "Forgot password" (needs an email sender / custom SMTP).
 - Home Screen / Lock Screen widgets; interactive widget to check items.
 - App Intents / Siri: "Add eggs to the shopping list".
 - Live Activity while in "shopping mode".

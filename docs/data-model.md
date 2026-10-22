@@ -11,7 +11,7 @@ All tables live in the `public` schema, are created only via `supabase/migration
 | `display_name` | `text` | shown in partner-activity hints |
 | `created_at` | `timestamptz` | default `now()` |
 
-Created by a trigger on `auth.users` insert.
+Created by a trigger on `auth.users` insert; `display_name` comes from the sign-up metadata (guests send the name they typed on the welcome screen).
 
 ### `lists`
 | column | type | notes |
@@ -81,9 +81,19 @@ $$;
 
 Always write `(select auth.uid())` rather than `auth.uid()` in policies so Postgres caches it per statement.
 
+### `list_secrets`
+| column | type | notes |
+|---|---|---|
+| `list_id` | `uuid` PK → `lists.id` | |
+| `password_hash` | `text` | bcrypt (`extensions.crypt` + `gen_salt('bf')`) |
+| `updated_at` | `timestamptz` | |
+
+RLS enabled with **no policies** and all privileges revoked: clients can never read it. `lists.has_password` (server-maintained) tells members whether the room can be joined yet.
+
 ## RPCs
 
-- `join_list(p_invite_code text) returns lists` — `security definer`; looks up the list by code, inserts the caller into `list_members` (idempotent), and returns the list. Rate limiting is unnecessary at this scale, but codes are long enough (~1B combinations) to not be guessable in practice.
+- `set_list_password(p_list_id uuid, p_password text)` — member only; ≥ 4 characters; stores the hash and sets `lists.has_password`.
+- `join_list(p_invite_code text, p_password text) returns lists` — `security definer`; requires a matching code **and** password (same `P0002` error for either mismatch), inserts the caller into `list_members` (idempotent), returns the list.
 - `regenerate_invite_code(p_list_id uuid) returns text` — member only.
 
 ## Realtime
@@ -124,6 +134,6 @@ Mirror the remote rows; field names in camelCase. Extra local-only fields:
 }
 ```
 
-Also `ListRecord`, `MemberRecord`, and a `SyncCursor` (per list: last `updated_at` seen).
+Also `ListRecord`. Sync cursors (per list: last `updated_at` seen) live in `UserDefaults` via `SyncCursors`; partner names are fetched into memory, not persisted.
 
 DTOs in `Data/Remote/DTOs.swift` are `Codable, Sendable` structs with `snake_case` coding keys; mapping DTO ⇄ `@Model` lives in one place.

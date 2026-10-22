@@ -20,29 +20,34 @@ xcodegen generate
 open ShoppingList.xcodeproj
 ```
 
-`Config/Secrets.xcconfig` (gitignored, included by `Config/Base.xcconfig`):
+`Config/Secrets.xcconfig` (gitignored, included by `Config/Base.xcconfig`) picks the backend **per platform**: phones use the cloud project, simulators the local stack.
 
 ```
-SUPABASE_URL = http:/$()/127.0.0.1:54321
-SUPABASE_KEY = sb_publishable_...   # the publishable (anon) key — never the secret key
+SUPABASE_URL[sdk=iphoneos*] = https:/$()/<project-ref>.supabase.co
+SUPABASE_KEY[sdk=iphoneos*] = sb_publishable_...          # cloud: `supabase projects api-keys`
+SUPABASE_URL[sdk=iphonesimulator*] = http:/$()/127.0.0.1:54321
+SUPABASE_KEY[sdk=iphonesimulator*] = sb_publishable_...   # local: `supabase status`
 ```
 
-(`/$()/` is the xcconfig trick to keep `//` from being parsed as a comment.) The values are exposed through `Info.plist` keys (`SupabaseURL`, `SupabaseKey`) and read once at startup into `AppConfig`.
+Publishable keys only — never the secret/service-role key. (`/$()/` is the xcconfig trick to keep `//` from being parsed as a comment.) The values reach `Info.plist` (`SupabaseURL`, `SupabaseKey`) and are read once at startup into `AppConfig`. To point a simulator at the cloud, copy the `iphoneos` lines over the `iphonesimulator` ones.
 
-Locally, sign-in emails don't leave your machine: open Mailpit at http://127.0.0.1:54324 to read the 6-digit code. The local email template lives in `supabase/templates/otp.html` (wired up in `supabase/config.toml`).
+Users are guests (`enable_anonymous_sign_ins = true`) or email + password accounts with **confirmations off** (`[auth.email] enable_confirmations = false`), so no email is ever sent ([ADR 0007](decisions/0007-guest-users-and-room-passwords.md), [0008](decisions/0008-optional-email-accounts.md)). Keep both settings in sync with the cloud via `supabase config push`.
 
-## Supabase cloud project (free tier)
+## Supabase cloud project
 
-1. Create a project at supabase.com (free plan: 500 MB DB, Realtime and Auth included — far more than two users need).
-2. Link and push the schema:
-   ```sh
-   supabase link --project-ref <ref>
-   supabase db push
-   ```
-3. **Auth → Providers → Email:** enabled. Turn **off** "Confirm email" link flow in favor of OTP.
-4. **Auth → Email Templates → Magic Link:** include the code, e.g. `Your code is {{ .Token }}`, so emails contain a 6-digit code instead of only a link.
-5. The built-in email sender is rate-limited (a few emails per hour) — fine for two people. If it becomes a problem, configure custom SMTP (e.g. Resend free tier).
-6. Put the project URL and publishable key in `Secrets.xcconfig` (use a separate `Secrets.Release.xcconfig` if you want local vs. cloud configs).
+The project exists: **`shopping-list`** (ref `esnlhkkaxwjfbcxnfihg`, region São Paulo `sa-east-1`, org "Personal", free plan). Its database password is in `supabase/.env` (gitignored); the app never needs it.
+
+```sh
+supabase link --project-ref esnlhkkaxwjfbcxnfihg   # once per machine (password from supabase/.env)
+set -a; . supabase/.env; set +a
+supabase db push -p "$SUPABASE_DB_PASSWORD"         # apply new migrations to the cloud
+supabase config diff                                # review before pushing auth settings
+supabase config push                                # answer y for auth; n for storage (local-only settings)
+```
+
+Notes:
+- **Don't add `[auth.email.template.*]` back to `config.toml`** while on the free plan with Supabase's built-in email sender: the cloud rejects the whole auth push.
+- Anonymous sign-ins are rate-limited to 30/hour per IP (`[auth.rate_limit] anonymous_users`). Before a public release, add a captcha.
 
 **Pausing:** free projects pause after ~7 days without activity. Weekly shopping usually prevents it; if it pauses, restore from the dashboard (data is kept). An optional GitHub Actions cron that pings the REST API every few days keeps it awake.
 
@@ -58,7 +63,7 @@ Locally, sign-in emails don't leave your machine: open Mailpit at http://127.0.0
 ### Later: paid Apple Developer Program ($99/yr)
 
 - Distribute via **TestFlight** (builds last 90 days, updates arrive over the air — no cable for your wife's phone).
-- Unlocks Sign in with Apple, push notifications, widgets with app groups, etc. Write an ADR when adopting any of these.
+- Unlocks Sign in with Apple (account upgrade for guests), push notifications, widgets with app groups, etc. Write an ADR when adopting any of these.
 
 ## Useful commands
 

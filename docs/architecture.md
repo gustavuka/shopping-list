@@ -16,7 +16,7 @@ Features   SwiftUI views + @Observable @MainActor models, one folder per feature
 Domain     Plain Sendable value types and pure logic (Category guessing, sorting, ItemDraft validation)
   │
 Data       SwiftData models + ListStore (local reads/writes + outbox)
-           SyncEngine (actor) — push outbox, pull deltas, realtime
+           SyncEngine (@MainActor, sole writer besides ListStore) — push outbox, pull deltas, realtime
            Remote (SupabaseClient wrapper, DTOs, AuthService)
 ```
 
@@ -26,8 +26,9 @@ Data       SwiftData models + ListStore (local reads/writes + outbox)
 ShoppingList/
   App/            ShoppingListApp.swift (+ RootView), AppConfig, Log, PreviewSupport
   Features/
-    Auth/         SignInView, CodeEntryView, AuthModel
-    Lists/        ListsView (switcher), JoinListView
+    Welcome/      WelcomeView (name → guest user → new list or join; or create account / sign in)
+    Account/      AccountSheet (create account, sign in, upgrade guest)
+    Lists/        SessionRootView, ShareRoomSheet, JoinListView
     List/         ShoppingListView, ItemRow, AddItemBar, ListModel
     ItemEditor/   ItemEditorSheet
     Settings/     SettingsView
@@ -63,14 +64,14 @@ project.yml
 ```
 
 1. A user intent calls a `ListStore` method. It writes SwiftData **and** appends an `OutboxEntry` in the same save, then nudges `SyncEngine`. The UI updates on the same frame.
-2. `SyncEngine` drains the outbox to Supabase off the main actor.
+2. `SyncEngine` drains the outbox to Supabase. Network I/O and JSON run inside `SupabaseRemote` off the main actor; bookkeeping on the (single) main `ModelContext` stays on it ([ADR 0006](decisions/0006-sync-on-main-context.md)).
 3. Remote changes arrive via Realtime (or a delta fetch on launch/foreground) and are applied to SwiftData through `ConflictResolver`. Views re-render automatically.
 
 Details: [sync.md](sync.md).
 
 ## Dependency injection
 
-- Services (`ListStore`, later `SyncEngine`, `AuthService`) are built once in `ShoppingListApp.init` and injected with `.environment(service)`; views read them with `@Environment(ListStore.self)`. Plain values (config, flags) use `@Entry` environment values.
+- `AppModel` (built once in `ShoppingListApp.init`) owns `AuthService`, `NetworkMonitor`, and the per-user `Session` (`ListStore` + `SyncEngine`), which exists only while signed in. Services are injected with `.environment(service)`; views read them with `@Environment(ListStore.self)`. Plain values (config, flags) use `@Entry` environment values.
 - Views/models depend on small protocols where a test fake is useful (`RemoteSyncing`, `AuthProviding`), concrete types otherwise. Don't add a protocol with a single implementation and no test need.
 - Previews use `PreviewSupport` (in-memory `ModelContainer` + seeded `ListStore`, no network).
 

@@ -9,6 +9,8 @@ final class ListRecord {
     var emoji: String?
     /// Assigned by the server on first sync; nil for a list created offline.
     var inviteCode: String?
+    /// Whether a member has set the room password (only then can others join).
+    var hasPassword: Bool = false
     var createdBy: UUID
     var createdAt: Date
     var updatedAt: Date

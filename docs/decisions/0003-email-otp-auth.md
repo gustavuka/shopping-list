@@ -1,6 +1,6 @@
 # 0003. Email OTP authentication
 
-- **Status:** Accepted
+- **Status:** Superseded by [0007](0007-guest-users-and-room-passwords.md)
 - **Date:** 2026-10-21
 
 ## Context

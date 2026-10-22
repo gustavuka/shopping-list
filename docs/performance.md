@@ -22,7 +22,7 @@
 - Defer anything non-essential (category guesser warm-up, purging old tombstones) with low-priority tasks.
 
 **Main actor**
-- Main actor does UI + SwiftData writes on the main context (small and fast). Networking, JSON decoding, and applying large remote batches run off the main actor (`SyncEngine` uses its own `ModelContext` via a `@ModelActor`).
+- Main actor does UI + SwiftData writes on the main context (small and fast). Networking and JSON decoding run off the main actor inside `SupabaseRemote`; applying the (small) resulting batches happens on the main context ([ADR 0006](decisions/0006-sync-on-main-context.md)). If Instruments ever shows hangs from big batches, revisit that ADR.
 - Never `await` the network inside a user-intent handler.
 
 **SwiftUI**
@@ -40,6 +40,12 @@
 **Network**
 - Coalesce outbox writes per row; batch upserts when more than one row is pending.
 - Select only needed columns in delta fetches.
+
+## Measuring
+
+- Debug builds (and Release with `-measureLaunch`) log `First frame (…): X ms since process start, Y ms since App.init` under the `performance` log category (`LaunchTimer`).
+- Simulator baseline (Release, iPhone 17 sim, Oct 2026): ~425 ms since `App.init` to a seeded list; "since process start" adds ~1.7 s of simulator spawn overhead and is not meaningful there. Of our time, opening the store is ~55 ms and building `AppModel` ~40 ms; the rest is SwiftUI's first render.
+- The 400 ms budget is for a physical device — confirm with Instruments there.
 
 ## Profiling checklist (before each TestFlight/install)
 

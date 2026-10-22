@@ -2,9 +2,11 @@
 
 A native iOS app for a couple to share one live shopping list. Both partners add items at home; at the market either one checks items off and the other phone updates instantly. It must feel **instant, fluid, and delightful** — snappiness is a feature, not a nice-to-have.
 
-**Stack:** Swift 6 · SwiftUI · iOS 26+ (Liquid Glass) · SwiftData (local cache) · Supabase (Postgres + RLS + Realtime + email OTP auth) via `supabase-swift` · XcodeGen
+**Stack:** Swift 6 · SwiftUI · iOS 26+ (Liquid Glass) · SwiftData (local cache) · Supabase (Postgres + RLS + Realtime + guest / email-password auth) via `supabase-swift` · XcodeGen
 
-**Status:** see the milestones in [docs/product.md](docs/product.md#milestones). Auth and sync are not built yet — the app is local-only and uses `LocalIdentity` as a stand-in user.
+**Identity & sharing:** each phone is a guest (just a name) or an email + password account; guests can upgrade in place. A list is a *room* joined with its code + password, whoever you are ([ADR 0007](docs/decisions/0007-guest-users-and-room-passwords.md), [0008](docs/decisions/0008-optional-email-accounts.md)). Never add a flow that needs email delivery — the free plan can't send it.
+
+**Status:** see the milestones in [docs/product.md](docs/product.md#milestones). Feature-complete for v1; next is shipping to both phones (M6).
 
 ## Commands
 
@@ -12,10 +14,15 @@ A native iOS app for a couple to share one live shopping list. Both partners add
 xcodegen generate                                   # regenerate ShoppingList.xcodeproj from project.yml
 xcodebuild -scheme ShoppingList -destination 'platform=iOS Simulator,name=iPhone 17' build
 xcodebuild -scheme ShoppingList -destination 'platform=iOS Simulator,name=iPhone 17' test
+TEST_RUNNER_RUN_PERF=1 xcodebuild … test            # also run the (slow) launch performance test
+TEST_RUNNER_RUN_INTEGRATION=1 xcodebuild … test     # also run tests against local Supabase (needs `supabase start`)
+xcrun simctl launch booted com.gustavomartins.shoppinglist -uiTesting -seeded   # signed-in demo, no backend
+swift scripts/make-app-icon.swift ShoppingList/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 supabase start                                      # local Supabase (needs Docker)
 supabase db reset                                   # re-apply all migrations + seed locally
 supabase migration new <name>                       # new SQL migration in supabase/migrations
 supabase test db                                    # pgTAP tests for schema + RLS
+supabase db push -p "$SUPABASE_DB_PASSWORD"         # migrations → cloud (password in supabase/.env)
 ```
 
 The `.xcodeproj` is generated — never edit it by hand; change `project.yml` and regenerate.
@@ -27,7 +34,7 @@ The `.xcodeproj` is generated — never edit it by hand; change `project.yml` an
 3. **Client generates UUIDs** for every row so offline creates need no round-trip.
 4. **Schema changes only via `supabase/migrations`.** Every table has RLS enabled with policies; no table is reachable without list membership.
 5. **Never commit secrets.** `Config/Secrets.xcconfig` is gitignored; only the anon key ships in the app, never the service-role key.
-6. **Swift 6 strict concurrency.** `@Observable` + `@MainActor` models, `actor SyncEngine`, `Sendable` DTOs. No Combine, no third-party UI libraries.
+6. **Swift 6 strict concurrency.** `@Observable` + `@MainActor` models (incl. `SyncEngine`, see ADR 0006), `Sendable` DTOs and remotes. No Combine, no third-party UI libraries.
 7. **Every user-facing interaction gets motion + haptics** per [docs/design-system.md](docs/design-system.md), with a Reduce Motion fallback.
 8. **Stay inside the performance budgets** in [docs/performance.md](docs/performance.md).
 9. **Significant decisions get an ADR** in [docs/decisions/](docs/decisions/) — don't silently diverge from an existing one; supersede it.

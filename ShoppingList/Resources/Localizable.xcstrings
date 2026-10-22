@@ -1,1 +1,297 @@
-{ "sourceLanguage" : "en", "strings" : { }, "version" : "1.0" }
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ added %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ added %2$@"
+          }
+        }
+      }
+    },
+    "%@ edited %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ edited %2$@"
+          }
+        }
+      }
+    },
+    "%@ got %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ got %2$@"
+          }
+        }
+      }
+    },
+    "%@ put back %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ put back %2$@"
+          }
+        }
+      }
+    },
+    "%@ removed %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ removed %2$@"
+          }
+        }
+      }
+    },
+    "%lld changes haven't synced yet and will be lost." : {
+
+    },
+    "%lld items" : {
+
+    },
+    "%lld left" : {
+
+    },
+    "000000" : {
+
+    },
+    "A change couldn't be saved and was undone" : {
+
+    },
+    "ABC123" : {
+
+    },
+    "Add an item" : {
+
+    },
+    "Add SUPABASE_URL and SUPABASE_KEY to Config/Secrets.xcconfig. See docs/setup.md." : {
+
+    },
+    "Add what you need below — it shows up on both phones." : {
+
+    },
+    "All done!" : {
+
+    },
+    "All in the cart 🎉" : {
+
+    },
+    "Bakery" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Change email" : {
+
+    },
+    "Clear cart" : {
+
+    },
+    "Close" : {
+
+    },
+    "Couldn't join right now. Check your connection and try again." : {
+
+    },
+    "Couldn't send the code. Check the address and your connection." : {
+
+    },
+    "Dairy & Eggs" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Done" : {
+
+    },
+    "Double-tap to mark as in cart" : {
+
+    },
+    "Double-tap to put back on the list" : {
+
+    },
+    "Drinks" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit item" : {
+
+    },
+    "Enter the code your partner shared." : {
+
+    },
+    "Everything's in the cart" : {
+
+    },
+    "Frozen" : {
+
+    },
+    "Getting your invite code… You need to be online." : {
+
+    },
+    "Groceries" : {
+
+    },
+    "Household" : {
+
+    },
+    "in cart" : {
+
+    },
+    "In cart" : {
+
+    },
+    "Invite code %@" : {
+
+    },
+    "Invite partner" : {
+
+    },
+    "Join" : {
+
+    },
+    "Join a list" : {
+
+    },
+    "Join our shopping list \"%@\"! Open Shopping List, tap Join a list and enter %@ — or tap %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Join our shopping list \"%1$@\"! Open Shopping List, tap Join a list and enter %2$@ — or tap %3$@"
+          }
+        }
+      }
+    },
+    "Last synced" : {
+
+    },
+    "Meat & Fish" : {
+
+    },
+    "Name" : {
+
+    },
+    "not in cart" : {
+
+    },
+    "not synced yet" : {
+
+    },
+    "Not synced yet" : {
+
+    },
+    "Note" : {
+
+    },
+    "Nothing to buy" : {
+
+    },
+    "Offline — changes will sync" : {
+
+    },
+    "One list, two phones, always in sync." : {
+
+    },
+    "Other" : {
+
+    },
+    "Pantry" : {
+
+    },
+    "People" : {
+
+    },
+    "Personal Care" : {
+
+    },
+    "Produce" : {
+
+    },
+    "Quantity (e.g. 2, 500 g)" : {
+
+    },
+    "Resend code" : {
+
+    },
+    "Save" : {
+
+    },
+    "Section" : {
+
+    },
+    "Send code" : {
+
+    },
+    "Send invite" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Shop together" : {
+
+    },
+    "Shopping List" : {
+
+    },
+    "Shown to your partner, e.g. “%@ added Milk”." : {
+
+    },
+    "Sign in" : {
+
+    },
+    "Sign out" : {
+
+    },
+    "Sign out?" : {
+
+    },
+    "Signed in as" : {
+
+    },
+    "Supabase isn't configured" : {
+
+    },
+    "That code didn't match any list. Check it and try again." : {
+
+    },
+    "That code didn't work. Check the latest email and try again." : {
+
+    },
+    "Waiting to sync" : {
+
+    },
+    "We sent a code to %@" : {
+
+    },
+    "you@example.com" : {
+
+    },
+    "Your lists stay safe in the cloud." : {
+
+    },
+    "Your name" : {
+
+    },
+    "Your partner" : {
+
+    },
+    "Your partner signs in, taps **Join a list**, and enters this code." : {
+
+    }
+  },
+  "version" : "1.0"
+}

@@ -4,7 +4,7 @@
 
 - **Swift 6 language mode**, strict concurrency checking `complete`. Fix warnings, don't silence them with `@unchecked Sendable` or `nonisolated(unsafe)` unless there's a comment explaining why it is safe.
 - Feature models: `@MainActor @Observable final class`. Views own them with `@State`.
-- `SyncEngine` is an `actor`; its SwiftData access goes through a `@ModelActor`.
+- `SyncEngine` is `@MainActor` and shares the main `ModelContext`; anything slow belongs in `RemoteSyncing` implementations, which are `Sendable` and run off the main actor ([ADR 0006](decisions/0006-sync-on-main-context.md)).
 - DTOs and domain types are `struct`s conforming to `Sendable` (and `Codable`/`Hashable` where useful).
 - Prefer `async/await` and `AsyncStream`. **No Combine.**
 - Use structured concurrency (`.task`, `async let`, task groups). Unstructured `Task {}` only at intent boundaries (button actions), and store/cancel long-running ones.

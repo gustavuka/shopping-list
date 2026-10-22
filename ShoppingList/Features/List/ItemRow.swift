@@ -10,6 +10,8 @@ struct ItemRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pendingCheck: Task<Void, Never>?
     @State private var showsCheckedEarly = false
+    /// Only surfaces after a few seconds: brief pending states are normal and shouldn't flicker.
+    @State private var showsUnsynced = false
 
     private var isChecked: Bool { item.isChecked || showsCheckedEarly }
 
@@ -37,6 +39,14 @@ struct ItemRow: View {
 
                 Spacer(minLength: 8)
 
+                if showsUnsynced {
+                    Image(systemName: "icloud.slash")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .transition(.opacity)
+                        .accessibilityLabel("Not synced yet")
+                }
+
                 CategoryBadge(category: item.category, size: 28)
                     .opacity(isChecked ? 0.4 : 1)
             }
@@ -44,10 +54,20 @@ struct ItemRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
+        .accessibilityIdentifier("item.\(item.name)")
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(isChecked ? .isSelected : [])
         .accessibilityHint(isChecked ? "Double-tap to put back on the list" : "Double-tap to mark as in cart")
         .onDisappear { pendingCheck?.cancel() }
+        .task(id: item.hasPendingChanges) {
+            guard item.hasPendingChanges else {
+                withAnimation { showsUnsynced = false }
+                return
+            }
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            withAnimation { showsUnsynced = true }
+        }
     }
 
     private var detail: String? {
@@ -57,7 +77,8 @@ struct ItemRow: View {
 
     private var accessibilityLabel: String {
         let state = isChecked ? String(localized: "in cart") : String(localized: "not in cart")
-        return [item.name, detail, String(localized: item.category.displayName), state]
+        let sync = showsUnsynced ? String(localized: "not synced yet") : nil
+        return [item.name, detail, String(localized: item.category.displayName), state, sync]
             .compactMap { $0 }
             .joined(separator: ", ")
     }

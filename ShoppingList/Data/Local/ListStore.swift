@@ -41,6 +41,27 @@ final class ListStore {
         return list
     }
 
+    /// Soft-deletes a list (e.g. your own empty list after joining your partner's).
+    func deleteList(_ list: ListRecord) {
+        list.deletedAt = now()
+        enqueue(list)
+        commit()
+    }
+
+    /// Removes everything stored locally — used on sign-out so the next account starts clean.
+    func wipeLocalData() {
+        // Deletes object by object on purpose: batch `delete(model:)` bypasses objects already loaded
+        // in the context, so the UI (and `ensureDefaultList`) would keep seeing the old account's rows.
+        do {
+            try context.fetch(FetchDescriptor<OutboxEntry>()).forEach(context.delete)
+            try context.fetch(FetchDescriptor<ItemRecord>()).forEach(context.delete)
+            try context.fetch(FetchDescriptor<ListRecord>()).forEach(context.delete)
+            try context.save()
+        } catch {
+            Logger.store.error("Wipe failed: \(error)")
+        }
+    }
+
     // MARK: Items
 
     @discardableResult
@@ -62,6 +83,10 @@ final class ListStore {
         return item
     }
 
+    func activeItemCount(in listID: UUID) -> Int {
+        activeItems(in: listID).count
+    }
+
     func setChecked(_ isChecked: Bool, for item: ItemRecord) {
         guard item.isChecked != isChecked else { return }
         item.isChecked = isChecked
@@ -78,6 +103,23 @@ final class ListStore {
         item.note = note?.nilIfBlank.map { String($0.prefix(500)) }
         item.category = category
         touch(item)
+    }
+
+    /// Drops `item` between two neighbors (either may be nil at the edges of its section).
+    func move(_ item: ItemRecord, between above: ItemRecord?, and below: ItemRecord?) {
+        item.position = Ordering.position(between: above?.position, and: below?.position)
+        item.updatedBy = currentUserID
+        enqueue(item)
+
+        let siblings = activeItems(in: item.listID).sorted { $0.position < $1.position }
+        if Ordering.needsRenormalization(siblings.map(\.position)) {
+            for (sibling, position) in zip(siblings, Ordering.renormalized(count: siblings.count)) {
+                sibling.position = position
+                sibling.updatedBy = currentUserID
+                enqueue(sibling)
+            }
+        }
+        commit()
     }
 
     func delete(_ item: ItemRecord) {
@@ -138,6 +180,7 @@ final class ListStore {
         if let existing = try? context.fetch(descriptor).first {
             existing.payload = payload
             existing.attempts = 0
+            existing.revision += 1
         } else {
             context.insert(OutboxEntry(entity: entity, rowID: rowID, payload: payload, now: now()))
         }
