@@ -96,13 +96,13 @@ export function ListView({
                 {l.name}
               </option>
             ))}
-            <option value="join">Join a room…</option>
+            <option value="join">Join a list…</option>
           </select>
         </label>
         <span className="count" aria-live="polite">
           {remaining ? `${remaining} left` : ''}
         </span>
-        <button type="button" className="icon-button" aria-label="Share room" onClick={() => onShow({ kind: 'share' })}>
+        <button type="button" className="icon-button" aria-label="Share list" onClick={() => onShow({ kind: 'share' })}>
           <ShareIcon />
         </button>
         <button type="button" className="icon-button" aria-label="Settings" onClick={() => onShow({ kind: 'settings' })}>

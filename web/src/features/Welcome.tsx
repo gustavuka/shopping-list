@@ -8,8 +8,17 @@ import { AccountForm, type AccountMode } from './AccountForm'
  * First launch. Fastest path: a name → guest user → new list or join a room (ADR 0007).
  * Or create an account / sign in with email + password (ADR 0008). Mirrors `WelcomeView.swift`.
  */
-export function Welcome({ joinCode, onWantsJoin }: { joinCode?: string; onWantsJoin: () => void }) {
-  const [name, setName] = useState('')
+export function Welcome({
+  name,
+  onNameChange: setName,
+  joinCode,
+  onStart,
+}: {
+  name: string
+  onNameChange: (name: string) => void
+  joinCode?: string
+  onStart: (joining: boolean) => void
+}) {
   const [isWorking, setWorking] = useState(false)
   const [error, setError] = useState<string>()
   const [accountMode, setAccountMode] = useState<AccountMode>()
@@ -21,7 +30,7 @@ export function Welcome({ joinCode, onWantsJoin }: { joinCode?: string; onWantsJ
     if (!trimmed || isWorking || !captcha.ready) return
     setWorking(true)
     setError(undefined)
-    if (joining) onWantsJoin()
+    onStart(joining)
     try {
       await auth.signInAsGuest(trimmed, captcha.token)
     } catch {
@@ -67,7 +76,7 @@ export function Welcome({ joinCode, onWantsJoin }: { joinCode?: string; onWantsJ
             disabled={!trimmed || isWorking || !captcha.ready}
             onClick={() => start(true)}
           >
-            {joinCode ? `Join room ${joinCode}` : 'Join a room'}
+            {joinCode ? `Join list ${joinCode}` : 'Join a list'}
           </button>
 
           <div className="welcome-links">

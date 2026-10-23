@@ -7,7 +7,7 @@ struct WelcomeView: View {
     let auth: AuthService
 
     @Environment(AppModel.self) private var model
-    @State private var name = ""
+    @SceneStorage("welcomeName") private var name = ""  // survives backing out of the join form
     @State private var isWorking = false
     @State private var errorMessage: String?
     @State private var failures = 0
@@ -64,8 +64,8 @@ struct WelcomeView: View {
                 Button {
                     start(joining: true)
                 } label: {
-                    label(model.pendingJoinCode.map { String(localized: "Join room \($0)") }
-                          ?? String(localized: "Join a room"))
+                    label(model.pendingJoinCode.map { String(localized: "Join list \($0)") }
+                          ?? String(localized: "Join a list"))
                 }
                 .buttonStyle(.glass)
             }
@@ -128,6 +128,7 @@ struct WelcomeView: View {
         isWorking = true
         errorMessage = nil
         isNameFocused = false  // the screen is about to be replaced; see AccountSheet.submit
+        model.isJoiningFromWelcome = joining
         if joining, model.pendingJoinCode == nil {
             model.pendingJoinCode = ""  // opens an empty join form once the session starts
         }

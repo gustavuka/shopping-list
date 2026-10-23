@@ -21,14 +21,45 @@ function takeJoinCode(): string | undefined {
 export function App() {
   const { userId } = useSyncExternalStore(auth.subscribe, auth.getState)
   const [pendingJoinCode, setPendingJoinCode] = useState(takeJoinCode)
+  // Kept here so the name survives backing out of the join form to the welcome screen.
+  const [welcomeName, setWelcomeName] = useState('')
+  const [joinFromWelcome, setJoinFromWelcome] = useState(false)
 
-  if (!userId) return <Welcome joinCode={pendingJoinCode} onWantsJoin={() => setPendingJoinCode((c) => c ?? '')} />
+  if (!userId) {
+    return (
+      <Welcome
+        name={welcomeName}
+        onNameChange={setWelcomeName}
+        joinCode={pendingJoinCode}
+        onStart={(joining) => {
+          setJoinFromWelcome(joining)
+          if (joining) setPendingJoinCode((c) => c ?? '')
+        }}
+      />
+    )
+  }
   return (
-    <SignedIn key={userId} userId={userId} joinCode={pendingJoinCode} onJoinHandled={() => setPendingJoinCode(undefined)} />
+    <SignedIn
+      key={userId}
+      userId={userId}
+      joinCode={pendingJoinCode}
+      joinFromWelcome={joinFromWelcome}
+      onJoinHandled={() => setPendingJoinCode(undefined)}
+    />
   )
 }
 
-function SignedIn({ userId, joinCode, onJoinHandled }: { userId: string; joinCode?: string; onJoinHandled: () => void }) {
+function SignedIn({
+  userId,
+  joinCode,
+  joinFromWelcome,
+  onJoinHandled,
+}: {
+  userId: string
+  joinCode?: string
+  joinFromWelcome: boolean
+  onJoinHandled: () => void
+}) {
   const [session, setSession] = useState<Session>()
 
   useEffect(() => {
@@ -53,7 +84,7 @@ function SignedIn({ userId, joinCode, onJoinHandled }: { userId: string; joinCod
   if (!session) return null
   return (
     <SessionContext.Provider value={session}>
-      <SessionRoot joinCode={joinCode} onJoinHandled={onJoinHandled} />
+      <SessionRoot joinCode={joinCode} joinFromWelcome={joinFromWelcome} onJoinHandled={onJoinHandled} />
     </SessionContext.Provider>
   )
 }

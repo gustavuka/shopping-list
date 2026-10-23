@@ -54,9 +54,9 @@ struct ShareRoomSheet: View {
     private var passwordForm: some View {
         VStack(spacing: 16) {
             VStack(spacing: 8) {
-                Text(isChangingPassword ? "New room password" : "Choose a room password")
+                Text(isChangingPassword ? "New list password" : "Choose a list password")
                     .font(.title2.bold())
-                Text("Your partner joins with the room code and this password. Use something you can say out loud.")
+                Text("Your partner joins with the list code and this password. Use something you can say out loud.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
@@ -87,7 +87,7 @@ struct ShareRoomSheet: View {
         VStack(spacing: 8) {
             Text("Shop together")
                 .font(.title2.bold())
-            Text("Your partner taps **Join a room** and enters:")
+            Text("Your partner taps **Join a list** and enters:")
                 .foregroundStyle(.secondary)
         }
 
@@ -142,7 +142,7 @@ struct ShareRoomSheet: View {
                 justSetPassword = chosen
                 isChangingPassword = false
             } catch {
-                errorMessage = String(localized: "Couldn't save the password. You need to be online to share a room.")
+                errorMessage = String(localized: "Couldn't save the password. You need to be online to share a list.")
             }
         }
     }
@@ -151,12 +151,12 @@ struct ShareRoomSheet: View {
         let link = DeepLink.joinURL(code: code).absoluteString
         if let justSetPassword {
             return String(localized: """
-            Join my shopping list "\(list.name)": open Shopping List, tap Join a room, and enter \
+            Join my shopping list "\(list.name)": open Shopping List, tap Join a list, and enter \
             code \(code) with password \(justSetPassword). Or tap \(link)
             """)
         }
         return String(localized: """
-        Join my shopping list "\(list.name)": open Shopping List, tap Join a room, and enter \
+        Join my shopping list "\(list.name)": open Shopping List, tap Join a list, and enter \
         code \(code) with the password I gave you. Or tap \(link)
         """)
     }

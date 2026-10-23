@@ -116,11 +116,11 @@ struct AccountSheet: View {
     private var footer: String {
         switch mode {
         case .createAccount:
-            String(localized: "Sign in on any phone to get your name and rooms back.")
+            String(localized: "Sign in on any phone to get your name and lists back.")
         case .signIn:
-            String(localized: "Your rooms come back automatically.")
+            String(localized: "Your lists come back automatically.")
         case .upgradeGuest:
-            String(localized: "Keeps everything you have now — your name, lists and rooms — and lets you sign in on another phone.")
+            String(localized: "Keeps everything you have now — your name and lists — and lets you sign in on another phone.")
         }
     }
 

@@ -27,7 +27,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   async function signOut() {
     const warnings = [
       pendingCount > 0 && `${pendingCount} change(s) haven't synced yet and will be lost.`,
-      !email && "You're a guest: to come back, you'll rejoin rooms with their code + password.",
+      !email && "You're a guest: to come back, you'll rejoin your lists with their code + password.",
     ].filter(Boolean)
     if (warnings.length && !confirm(`${warnings.join('\n')}\n\nSign out anyway?`)) return
     await auth.signOut()

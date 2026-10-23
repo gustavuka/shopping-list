@@ -45,8 +45,8 @@ export function ShareSheet({ list, onClose }: { list: ListRow; onClose: () => vo
   return (
     <Sheet title="Share this list" onClose={onClose}>
       <div className="form">
-        <p className="secondary">Your partner joins with the room code and the password you choose.</p>
-        <div className="room-code" aria-label={`Room code ${list.invite_code ?? 'not ready yet'}`}>
+        <p className="secondary">Your partner joins with the list code and the password you choose.</p>
+        <div className="room-code" aria-label={`List code ${list.invite_code ?? 'not ready yet'}`}>
           {list.invite_code ?? <span className="secondary">Connecting…</span>}
         </div>
 
@@ -55,7 +55,7 @@ export function ShareSheet({ list, onClose }: { list: ListRow; onClose: () => vo
             <input
               className="field"
               type="text"
-              placeholder="Room password (6+ characters)"
+              placeholder="List password (6+ characters)"
               autoComplete="off"
               autoCapitalize="none"
               value={password}
@@ -71,7 +71,7 @@ export function ShareSheet({ list, onClose }: { list: ListRow; onClose: () => vo
               {copied ? 'Copied!' : 'Share invite'}
             </button>
             <button type="button" className="link" onClick={() => setEditing(true)}>
-              Change room password
+              Change list password
             </button>
           </>
         )}

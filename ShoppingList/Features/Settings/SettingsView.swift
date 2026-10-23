@@ -61,9 +61,9 @@ struct SettingsView: View {
                 if sync.status.pendingCount > 0 {
                     Text("\(sync.status.pendingCount) changes haven't synced yet and will be lost.")
                 } else if isGuest {
-                    Text("Make sure you know your room's code and password to get back in.")
+                    Text("Make sure you know your list's code and password to get back in.")
                 } else {
-                    Text("Your lists and rooms come back when you sign in again.")
+                    Text("Your lists come back when you sign in again.")
                 }
             }
             .sheet(item: $accountSheet) { mode in
@@ -88,13 +88,13 @@ struct SettingsView: View {
             } header: {
                 Text("Account")
             } footer: {
-                Text("You're a guest on this phone. Save as an account to keep your name and rooms on any phone. Signing in to a different account replaces this guest.")
+                Text("You're a guest on this phone. Save as an account to keep your name and lists on any phone. Signing in to a different account replaces this guest.")
             }
 
             Section {
                 Button("Reset this phone", role: .destructive) { confirmSignOut = true }
             } footer: {
-                Text("Removes your lists from this phone. Your rooms stay — rejoin them with their code and password.")
+                Text("Removes your lists from this phone. They're not deleted — rejoin them with their code and password.")
             }
         } else {
             Section("Account") {

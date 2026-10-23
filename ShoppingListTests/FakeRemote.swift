@@ -13,6 +13,8 @@ actor FakeRemote: RemoteSyncing {
     private var clock = Date(timeIntervalSince1970: 1_000_000)
     private var rejectedItemIDs: Set<UUID> = []
     private var liveContinuation: AsyncStream<RemoteChange>.Continuation?
+    /// Lists covered by the latest `changes(listIDs:)` subscription.
+    private(set) var subscribedListIDs: Set<UUID> = []
     /// Runs inside `upsertItems` before the write lands — lets a test edit locally "mid-flight".
     private var beforeItemUpsert: (@Sendable () async -> Void)?
 
@@ -104,6 +106,7 @@ actor FakeRemote: RemoteSyncing {
     func changes(listIDs: [UUID]) async -> AsyncStream<RemoteChange> {
         let (stream, continuation) = AsyncStream<RemoteChange>.makeStream()
         liveContinuation = continuation
+        subscribedListIDs = Set(listIDs)
         return stream
     }
 

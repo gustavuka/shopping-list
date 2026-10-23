@@ -86,7 +86,7 @@ export function AccountForm({
         onChange={(e) => setPassword(e.target.value)}
       />
       {needsCaptcha && captcha.widget}
-      {mode === 'upgrade' && <p className="footnote secondary">Your name, lists and rooms stay exactly as they are.</p>}
+      {mode === 'upgrade' && <p className="footnote secondary">Your name and lists stay exactly as they are.</p>}
       <button type="submit" className="button prominent" disabled={!canSubmit}>
         {isWorking ? '…' : titles[mode]}
       </button>

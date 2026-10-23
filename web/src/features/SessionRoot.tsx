@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState, useSyncExternalStore } from 'react'
+import { auth } from '../data/auth'
 import { db } from '../data/db'
 import { JoinSheet } from './JoinSheet'
 import { ListView } from './ListView'
@@ -12,7 +13,16 @@ export type SessionSheet = { kind: 'share' } | { kind: 'join'; code?: string } |
 const selectedKey = 'selectedListID'
 
 /** Signed-in shell: picks the current list, drives sync with the page lifecycle, handles join links. */
-export function SessionRoot({ joinCode, onJoinHandled }: { joinCode?: string; onJoinHandled: () => void }) {
+export function SessionRoot({
+  joinCode,
+  joinFromWelcome,
+  onJoinHandled,
+}: {
+  joinCode?: string
+  /** The user tapped "Join a list" on the welcome screen: backing out returns there. */
+  joinFromWelcome: boolean
+  onJoinHandled: () => void
+}) {
   const { store, sync } = useSession()
   const lists = useLiveQuery(async () =>
     (await db.lists.toArray()).filter((l) => !l.deleted_at).sort((a, b) => a.created_at.localeCompare(b.created_at)),
@@ -20,6 +30,9 @@ export function SessionRoot({ joinCode, onJoinHandled }: { joinCode?: string; on
   const [selectedId, setSelectedId] = useState(() => localStorage.getItem(selectedKey) ?? '')
   const [sheet, setSheet] = useState<SessionSheet>()
   const currentList = lists?.find((l) => l.id === selectedId) ?? lists?.[0]
+  // Until this join succeeds, the guest was only created to join: no "Groceries" of its own, and
+  // closing the form signs it out again, back to the welcome screen.
+  const [isWelcomeJoin, setWelcomeJoin] = useState(joinFromWelcome)
   const hasPulled = useSyncExternalStore(sync.subscribe, () => sync.getState().lastSyncedAt !== undefined)
 
   function select(id: string) {
@@ -50,8 +63,8 @@ export function SessionRoot({ joinCode, onJoinHandled }: { joinCode?: string; on
   // First launch in this browser: create "Groceries" only once a pull has succeeded, so a flaky
   // network can't hide the account's existing lists and leave a duplicate behind.
   useEffect(() => {
-    if (hasPulled) void store.ensureDefaultList()
-  }, [hasPulled, store])
+    if (hasPulled && !isWelcomeJoin) void store.ensureDefaultList()
+  }, [hasPulled, isWelcomeJoin, store])
 
   useEffect(() => {
     if (joinCode === undefined) return
@@ -62,6 +75,7 @@ export function SessionRoot({ joinCode, onJoinHandled }: { joinCode?: string; on
   /** Switch to the joined list; drop our own list if it was an untouched empty default. */
   async function didJoin(listId: string) {
     setSheet(undefined)
+    setWelcomeJoin(false)
     if (
       currentList &&
       currentList.id !== listId &&
@@ -83,7 +97,11 @@ export function SessionRoot({ joinCode, onJoinHandled }: { joinCode?: string; on
       )}
       {sheet?.kind === 'share' && currentList && <ShareSheet list={currentList} onClose={() => setSheet(undefined)} />}
       {sheet?.kind === 'join' && (
-        <JoinSheet initialCode={sheet.code} onJoined={didJoin} onClose={() => setSheet(undefined)} />
+        <JoinSheet
+          initialCode={sheet.code}
+          onJoined={didJoin}
+          onClose={() => (isWelcomeJoin ? void auth.signOut() : setSheet(undefined))}
+        />
       )}
       {sheet?.kind === 'settings' && <SettingsSheet onClose={() => setSheet(undefined)} />}
     </>

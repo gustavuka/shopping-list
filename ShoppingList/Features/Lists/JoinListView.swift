@@ -28,7 +28,7 @@ struct JoinListView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
-                    Text("Join a room")
+                    Text("Join a list")
                         .font(.title2.bold())
                     Text("Enter the code and password your partner shared.")
                         .foregroundStyle(.secondary)
@@ -104,7 +104,7 @@ struct JoinListView: View {
                 onJoined(listID)
                 dismiss()
             } catch JoinError.invalidCodeOrPassword {
-                errorMessage = String(localized: "That code and password don't match a room. Check both and try again.")
+                errorMessage = String(localized: "That code and password don't match a list. Check both and try again.")
                 failures += 1
             } catch JoinError.tooManyAttempts {
                 errorMessage = String(localized: "Too many tries. Wait a few minutes and try again.")

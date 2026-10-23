@@ -104,6 +104,21 @@ struct SyncEngineTests {
         #expect(sync.recentlyChangedIDs.contains(milk.id))
     }
 
+    @Test func listCreatedAfterFirstPullIsLiveRightAway() async throws {
+        await sync.syncNow()  // first launch: nothing on the server yet, so no subscription
+        let list = store.ensureDefaultList()
+        let milk = try #require(store.addItem(named: "Milk", to: list))
+        await sync.push()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(await remote.subscribedListIDs == [list.id])
+        var checked = try #require(await remote.items[milk.id])
+        checked.isChecked = true
+        await remote.partnerWrites(checked, partner: partner)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(milk.isChecked, "the partner's change arrives live without a foreground/pull")
+    }
+
     @Test func rejectedWriteRestoresServerVersion() async throws {
         let list = store.ensureDefaultList()
         let tea = try #require(store.addItem(named: "Tea", to: list))

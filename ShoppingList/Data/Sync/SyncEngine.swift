@@ -40,6 +40,7 @@ final class SyncEngine {
     @ObservationIgnored private var retryAttempt = 0
     @ObservationIgnored private var realtimeTask: Task<Void, Never>?
     @ObservationIgnored private var subscribedListIDs: Set<UUID> = []
+    @ObservationIgnored private var subscriptionGeneration = 0
     @ObservationIgnored private var isShutDown = false
 
     init(context: ModelContext, remote: any RemoteSyncing, userID: UUID, cursors: SyncCursors? = nil) {
@@ -69,6 +70,7 @@ final class SyncEngine {
         realtimeTask?.cancel()
         realtimeTask = nil
         subscribedListIDs = []
+        subscriptionGeneration += 1  // a subscription still in flight must not come back to life
         retryTask?.cancel()
         retryTask = nil
     }
@@ -205,9 +207,17 @@ final class SyncEngine {
         let batch = snapshots(entries, as: ListDTO.self)
         guard !batch.isEmpty else { return }
         do {
+            let wasCreated = batch.contains { list(id: $0.dto.id)?.updatedAt == .distantPast }
             let saved = try await remote.upsertLists(batch.map(\.dto))
             complete(batch, saved: Dictionary(saved.map { ($0.id, $0) }, uniquingKeysWith: { $1 })) { dto in
                 self.list(id: dto.id)?.apply(dto)
+            }
+            if wasCreated {
+                // A list created on this device exists on the server only now. Listen to it right away
+                // instead of at the next pull (on a first launch, the next foreground), or the partner's
+                // changes don't show up live. Not awaited: item pushes shouldn't wait for it.
+                let ids = syncedListIDs()
+                Task { await subscribe(to: ids) }
             }
         } catch where remote.classify(error) == .rejected {
             Logger.sync.error("List write rejected: \(error)")
@@ -302,12 +312,15 @@ final class SyncEngine {
     private func subscribe(to listIDs: Set<UUID>) async {
         guard listIDs != subscribedListIDs || realtimeTask == nil else { return }
         realtimeTask?.cancel()
+        realtimeTask = nil
         subscribedListIDs = listIDs
-        guard !listIDs.isEmpty else {
-            realtimeTask = nil
-            return
-        }
+        subscriptionGeneration += 1
+        let generation = subscriptionGeneration
+        guard !listIDs.isEmpty else { return }
         let stream = await remote.changes(listIDs: Array(listIDs))
+        // A push and a pull can both subscribe; only the latest call keeps its stream. Dropping the
+        // other one terminates it, which removes its channels.
+        guard generation == subscriptionGeneration, !isShutDown else { return }
         realtimeTask = Task { [weak self] in
             for await change in stream {
                 guard let self else { return }
@@ -419,6 +432,12 @@ final class SyncEngine {
         var descriptor = FetchDescriptor<ListRecord>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         return try? context.fetch(descriptor).first
+    }
+
+    /// Active lists the server already has (the ones a pull would subscribe to).
+    private func syncedListIDs() -> Set<UUID> {
+        let lists = (try? context.fetch(FetchDescriptor<ListRecord>(predicate: #Predicate { $0.deletedAt == nil }))) ?? []
+        return Set(lists.filter { $0.updatedAt != .distantPast }.map(\.id))
     }
 
     private func refreshPendingCount() {

@@ -19,7 +19,7 @@ final class WelcomeFlowTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Nothing to buy"].waitForExistence(timeout: 15), "guest user created, list ready")
 
         app.buttons["People"].tap()
-        app.buttons["Share room"].tap()
+        app.buttons["Share list"].tap()
         let password = app.textFields["At least 6 characters"]
         XCTAssertTrue(password.waitForExistence(timeout: 5))
         password.tap()

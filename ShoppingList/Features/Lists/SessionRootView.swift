@@ -51,7 +51,7 @@ struct SessionRootView: View {
         // First launch on this device: create "Groceries" only once a pull has succeeded, so a flaky
         // network can't hide the account's existing lists and leave a duplicate behind.
         .onChange(of: sync.status.lastSyncedAt != nil, initial: true) { _, hasPulled in
-            if hasPulled { store.ensureDefaultList() }
+            if hasPulled && !model.isJoiningFromWelcome { store.ensureDefaultList() }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -67,7 +67,7 @@ struct SessionRootView: View {
             sheet = .join(code: code.isEmpty ? nil : code)
             model.pendingJoinCode = nil
         }
-        .sheet(item: $sheet) { sheet in
+        .sheet(item: $sheet, onDismiss: backOutOfWelcomeJoin) { sheet in
             switch sheet {
             case .share:
                 if let list = currentList { ShareRoomSheet(list: list) }
@@ -90,8 +90,15 @@ struct SessionRootView: View {
         }
     }
 
+    /// Closing the join form opened from the welcome screen goes back there instead of into an empty list.
+    private func backOutOfWelcomeJoin() {
+        guard model.isJoiningFromWelcome else { return }
+        Task { await model.signOut() }
+    }
+
     /// Switch to the joined list; drop our own list if it was an untouched empty default.
     private func didJoin(listID: UUID) {
+        model.isJoiningFromWelcome = false
         if let current = currentList,
            current.id != listID,
            current.createdBy == sync.userID,

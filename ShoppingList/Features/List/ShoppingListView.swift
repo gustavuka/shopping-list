@@ -242,8 +242,8 @@ struct ShoppingListView: View {
     private func toolbarContent(hasChecked: Bool) -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Menu("People", systemImage: "person.2.fill") {
-                Button("Share room", systemImage: "person.badge.plus") { onShow(.share) }
-                Button("Join a room", systemImage: "door.left.hand.open") { onShow(.join(code: nil)) }
+                Button("Share list", systemImage: "person.badge.plus") { onShow(.share) }
+                Button("Join a list", systemImage: "door.left.hand.open") { onShow(.join(code: nil)) }
                 Divider()
                 Button("Settings", systemImage: "gearshape") { onShow(.settings) }
             }

@@ -45,12 +45,12 @@ export function JoinSheet({
   }
 
   return (
-    <Sheet title="Join a room" onClose={onClose}>
+    <Sheet title="Join a list" onClose={onClose}>
       <form className="form" onSubmit={submit}>
         <input
           className="field room-code-field"
           placeholder="ABC234"
-          aria-label="Room code"
+          aria-label="List code"
           autoCapitalize="characters"
           autoComplete="off"
           maxLength={6}
@@ -60,8 +60,8 @@ export function JoinSheet({
         />
         <input
           className="field"
-          placeholder="Room password"
-          aria-label="Room password"
+          placeholder="List password"
+          aria-label="List password"
           autoCapitalize="none"
           autoComplete="off"
           autoFocus={!!initialCode}

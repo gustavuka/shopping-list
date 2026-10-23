@@ -22,6 +22,9 @@ final class AppModel {
     private(set) var session: Session?
     /// A room to join, from a link or the welcome screen ("" = empty join form); consumed by `SessionRootView`.
     var pendingJoinCode: String?
+    /// The user tapped "Join a list" on the welcome screen. Until that join succeeds the new guest gets
+    /// no list of its own, and cancelling signs it out again, back to the welcome screen.
+    var isJoiningFromWelcome = false
 
     @ObservationIgnored private let remote: (any RemoteSyncing)?
     private static let lastUserKey = "lastUserID"
@@ -118,6 +121,7 @@ final class AppModel {
         session.store.wipeLocalData()
         SyncCursors(userID: session.userID).reset()
         UserDefaults.standard.removeObject(forKey: Self.lastUserKey)
+        isJoiningFromWelcome = false
         self.session = nil
     }
 }
